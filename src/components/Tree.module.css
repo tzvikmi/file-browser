@@ -1,0 +1,80 @@
+.tree {
+  padding: var(--space-2);
+  overflow-y: auto;
+  height: 100%;
+  user-select: none;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.row:hover {
+  background: var(--color-hover);
+}
+
+.row.selected {
+  background: var(--color-selection);
+  color: var(--color-selection-text);
+}
+
+.chevron {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--color-text-muted);
+  transition: transform 0.12s ease;
+}
+
+.row.selected .chevron {
+  color: var(--color-selection-text);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.chevronSpacer {
+  width: 14px;
+  flex: none;
+}
+
+.typeIcon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--color-accent);
+}
+
+.row.selected .typeIcon {
+  color: var(--color-selection-text);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
