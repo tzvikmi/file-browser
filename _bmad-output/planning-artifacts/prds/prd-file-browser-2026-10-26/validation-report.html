@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PRD Validation: Duplicate File Finder</title>
+<style>
+  @media (max-width: 600px) { .container { padding: 20px 16px 48px; } header.report-header { flex-direction: column; } }
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+
+    --grade-exc: #16a34a;
+    --grade-good: #65a30d;
+    --grade-fair: #d97706;
+    --grade-poor: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .grade {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .grade-excellent { background: var(--grade-exc); }
+  .grade-good { background: var(--grade-good); }
+  .grade-fair { background: var(--grade-fair); }
+  .grade-poor { background: var(--grade-poor); }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header class="report-header"><div class="title"><h1>Duplicate File Finder — Validation Report</h1><div class="subtitle">/home/tzvika/file-browser/_bmad-output/planning-artifacts/prds/prd-file-browser-2026-10-26/prd.md</div></div><div class="grade grade-excellent">Excellent</div></header>
+    <div class="synthesis"><p>A tight, honest, well-calibrated PRD for a hobby feature. The Glossary does real work, the three EARS requirements (FR-1, FR-4, FR-7) are present and each carries a concrete test, and nothing exceeds the brief. No critical or high findings, and no dimension below adequate, so the formula grade is Excellent.</p><p>The adversarial reviewer shifts the picture: the PRD is readable and honest, but not yet fully testable. The recurring seams are the FR-4 progress arithmetic against the &quot;unreadable&quot; definition, when groups appear, read-only and no-network having no requirement, and one wrong browser example added during polish. The grade reflects the rubric formula, not these testability gaps.</p></div>
+    <div class="dimension-summary"><div class="dim-card"><div class="dim-name">Decision-readiness</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div><div class="dim-card"><div class="dim-name">Substance over theater</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div><div class="dim-card"><div class="dim-name">Strategic coherence</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div><div class="dim-card"><div class="dim-name">Done-ness clarity</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div><div class="dim-card"><div class="dim-name">Scope honesty</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div><div class="dim-card"><div class="dim-name">Downstream usability</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div><div class="dim-card"><div class="dim-name">Shape fit</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div></div>
+    <section class="dimension"><details><summary><h2>Decision-readiness</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Decisions are stated as decisions: empty files excluded (FR-2), symbolic links deliberately unreadable, no persistence (FR-9). Trade-offs are named, for example that partial results after a cancel may miss groups but never contain a non-identical file (FR-5). The two open questions are genuinely open and honestly labelled.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Case-matching question affects a testable FR</h3><span class="finding-location">§8 Q1, FR-8</span></header><div class="finding-note">Whether `Node_Modules` is skipped is left open, but the FR-8 and FR-9 tests will implicitly pick an answer.</div><div class="finding-fix"><strong>Fix:</strong> State a default (for example exact match) in one sentence, or note that tests use lowercase names only.</div></article></div></details></section>
+    <section class="dimension"><details><summary><h2>Substance over theater</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>No persona theater: Dana appears in two journeys and both drive requirements. The Vision is candid about having no measured problem. No NFR boilerplate; the one bound is concrete (2 seconds on 10,000 files).</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Safety is the stated purpose, but nothing verifies it</h3><span class="finding-location">§1, §7 SM-1</span></header><div class="finding-note">The read-only and no-network properties appear only in Non-Goals and the addendum. SM-1&#x27;s eight criteria cover correctness and responsiveness only.</div><div class="finding-fix"><strong>Fix:</strong> Add one line to SM-1 (or a single FR): after a scan the open folder is unchanged and no network request was made.</div></article></div></details></section>
+    <section class="dimension"><details><summary><h2>Strategic coherence</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>There is a thesis (a trustworthy answer, safely, without hanging) and the features, SM-1 and the counter-metric follow from it. Scope is small and the deferral of jump-to-file is honest.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Counter-metric has nothing to counter</h3><span class="finding-location">§7 SM-C1</span></header><div class="finding-note">SM-1 contains no speed target, so &quot;Counterbalances SM-1&quot; overstates it. It reads as a guardrail.</div><div class="finding-fix"><strong>Fix:</strong> Reword as a guardrail, or drop.</div></article></div></details></section>
+    <section class="dimension"><details><summary><h2>Done-ness clarity</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>Most FRs have checkable consequences with worked numbers. The weak points are the interactions between definitions.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Progress arithmetic breaks for some unreadable items</h3><span class="finding-location">FR-4 vs Glossary &quot;File to check&quot;, &quot;Unreadable file&quot;</span></header><div class="finding-note">FR-4 requires checked + unreadable = total. But &quot;unreadable&quot; also covers folders (not files to check), an unreadable empty file falls in neither count, and a unique-size unreadable file is both &quot;checked&quot; and &quot;never checked&quot;.</div><div class="finding-fix"><strong>Fix:</strong> Count only unreadable files that were files to check; list unreadable folders separately; state that unreadable overrides the unique-size shortcut.</div></article><article class="finding"><header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">When groups appear is unspecified</h3><span class="finding-location">FR-1, FR-5, UJ-1</span></header><div class="finding-note">FR-5 implies groups surface progressively, but FR-1 and UJ-1 do not say whether they appear during the scan or only at the end. FR-3&#x27;s partial figure depends on the answer.</div><div class="finding-fix"><strong>Fix:</strong> Add a consequence to FR-1 saying which, so a tester knows when to look.</div></article><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">The 2-second bound is narrower than the claim</h3><span class="finding-location">FR-6</span></header><div class="finding-note">&quot;However large the open folder is&quot; is unbounded; the only testable consequence is 10,000 files.</div><div class="finding-fix"><strong>Fix:</strong> Word the claim for the 10,000-file reference folder, or say the bound is for reference-size folders.</div></article><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">&quot;Human-readable size&quot; is unspecified</h3><span class="finding-location">FR-3</span></header><div class="finding-note">The examples do not say 1000 or 1024, or rounding.</div><div class="finding-fix"><strong>Fix:</strong> Pick one convention in one phrase.</div></article><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">&quot;Test folder&quot; is not defined</h3><span class="finding-location">§7 SM-1</span></header><div class="finding-note">SM-1 says &quot;proven on a test folder&quot; but its content is only implied by the per-FR examples.</div><div class="finding-fix"><strong>Fix:</strong> One sentence: the test folder is the union of the FR test examples plus a 10,000-file folder.</div></article></div></details></section>
+    <section class="dimension"><details><summary><h2>Scope honesty</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Non-Goals, In Scope and Out of Scope agree with each other and with the FRs, with no scope beyond the brief. &quot;No assumptions remain unconfirmed&quot; is consistent with the absence of assumption tags.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">No boundary for files changing during a scan</h3><span class="finding-location">FR-6, FR-1</span></header><div class="finding-note">&quot;Never freeze&quot; is stated, but there is no non-goal for a file that changes during the scan.</div><div class="finding-fix"><strong>Fix:</strong> Optional one-line non-goal, or leave as is for hobby stakes.</div></article></div></details></section>
+    <section class="dimension"><details><summary><h2>Downstream usability</h2><span class="verdict-pill verdict-adequate">adequate</span></summary><div class="dim-body"><div class="dim-judgment"><p>The Glossary is thorough and mostly obeyed; IDs are contiguous and every cross-reference resolves. Each journey names its protagonist.</p></div></div><div class="findings-list"><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Browser example contradicts itself</h3><span class="finding-location">§2.2</span></header><div class="finding-note">&quot;Any browser other than Chromium (for example Chrome or Edge)&quot; lists two Chromium-based browsers as unsupported examples. This was introduced by the polish pass.</div><div class="finding-fix"><strong>Fix:</strong> Use &quot;for example Firefox or Safari&quot;.</div></article><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Glossary drift in UJ-1</h3><span class="finding-location">§2.3 UJ-1 Climax</span></header><div class="finding-note">&quot;its paths and size&quot; and &quot;total space taken by extra copies&quot; use informal wording where the Glossary defines &quot;shared size&quot; and &quot;wasted space&quot;.</div><div class="finding-fix"><strong>Fix:</strong> Use the Glossary terms.</div></article><article class="finding"><header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Light implementation leakage</h3><span class="finding-location">Glossary &quot;Checked&quot;, FR-4 Test</span></header><div class="finding-note">&quot;Decided without comparison&quot; and &quot;slow comparison&quot; describe the size pre-filter. It is needed to define the count, but conflicts with §0&#x27;s behaviour-only claim.</div><div class="finding-fix"><strong>Fix:</strong> Phrase as &quot;files with no same-size file are counted immediately&quot;.</div></article></div></details></section>
+    <section class="dimension"><details><summary><h2>Shape fit</h2><span class="verdict-pill verdict-strong">strong</span></summary><div class="dim-body"><div class="dim-judgment"><p>Two named-protagonist journeys on a solo capability feature is on the light side of over-formalized, but each exposes an FR the capability list would otherwise miss. Rigor is correctly light.</p></div></div></details></section>
+    <section class="reviewer-section"><details><summary><h2>Adversarial review</h2><span class="reviewer-source">review-adversarial.md</span></summary><div class="dim-body"><div class="dim-judgment"><p>21 findings, no severity by design. FR-1, FR-4 and FR-7 are owner-verbatim, so guards target the surrounding text. Findings are condensed here; the full text is in the source file.</p></div></div><div class="findings-list"><article class="finding"><header><h3 class="finding-title">FR-4 identity contradicts the &quot;unreadable&quot; definition</h3><span class="finding-location">FR-4 consequences, Glossary</span></header><div class="finding-note">&quot;Unreadable&quot; includes symlinks and unopenable folders, which are not files to check, so checked + unreadable can exceed the total.</div><div class="finding-fix"><strong>Fix:</strong> Count only unreadable files that were in the total; report folders and symlinks separately.</div></article><article class="finding"><header><h3 class="finding-title">The total is unknown when first displayed</h3><span class="finding-location">Glossary &quot;File to check&quot;, FR-4</span></header><div class="finding-note">Emptiness cannot be known for a file that cannot be opened, and nothing can be counted inside an unopenable folder.</div><div class="finding-fix"><strong>Fix:</strong> State when the total is fixed, or that unknowable files count as unreadable.</div></article><article class="finding"><header><h3 class="finding-title">A file counted &quot;checked&quot; can later turn out unreadable</h3><span class="finding-location">Glossary &quot;Checked&quot;, FR-4, FR-7</span></header><div class="finding-note">A read failure can happen after a file was matched or decided unique by size; double counting breaks the FR-4 identity.</div><div class="finding-fix"><strong>Fix:</strong> A file is counted exactly once; a failure moves it to unreadable and removes it from any shown group.</div></article><article class="finding"><header><h3 class="finding-title">FR-4&#x27;s test is not deterministic from behaviour alone</h3><span class="finding-location">FR-4 Test and example</span></header><div class="finding-note">&quot;Slow comparison&quot; and &quot;2 of 4 after two files&quot; assume an order and granularity. FR-4 is owner-verbatim, so the guard targets the surrounding text.</div><div class="finding-fix"><strong>Fix:</strong> Add observable checks: the count never decreases, never exceeds the total, starts at 0 and ends at the total.</div></article><article class="finding"><header><h3 class="finding-title">The Glossary leaks the size pre-filter</h3><span class="finding-location">Glossary &quot;Checked&quot;, addendum</span></header><div class="finding-note">Behaviour-only PRD encodes the brief&#x27;s pre-filter, which the addendum leaves for the architect to confirm.</div><div class="finding-fix"><strong>Fix:</strong> Reword: a file counts as checked once the app has determined whether it has an identical twin.</div></article><article class="finding"><header><h3 class="finding-title">&quot;Full path&quot; cannot be produced as written</h3><span class="finding-location">FR-1, FR-7, UJ-1</span></header><div class="finding-note">Browser folder access exposes only paths relative to the picked folder, never the absolute disk path.</div><div class="finding-fix"><strong>Fix:</strong> Define &quot;path&quot; in the Glossary as relative to the open folder and replace &quot;full path&quot;.</div></article><article class="finding"><header><h3 class="finding-title">Responsiveness and cancel bound are under-specified</h3><span class="finding-location">FR-6, FR-5</span></header><div class="finding-note">The bound is tested on one example; a few huge files can block cancel as well as many small ones; &quot;scroll&quot; is untestable before results exist.</div><div class="finding-fix"><strong>Fix:</strong> Restate for any folder size; add a one-huge-file test case.</div></article><article class="finding"><header><h3 class="finding-title">FR-1 and FR-5 conflict on completeness</h3><span class="finding-location">FR-1 vs FR-5, FR-3</span></header><div class="finding-note">FR-1 says the app lists each group; FR-5 allows missing groups after a cancel; timing of results is not stated.</div><div class="finding-fix"><strong>Fix:</strong> State in 4.1 that a cancelled scan lists only confirmed groups and groups may appear while running.</div></article><article class="finding"><header><h3 class="finding-title">Progressive display conflicts with &quot;one group of three, never pairs&quot;</h3><span class="finding-location">FR-1 consequences, FR-5</span></header><div class="finding-note">A pair could be on screen before the third copy is found; a cancel then leaves a pair.</div><div class="finding-fix"><strong>Fix:</strong> State that a group may lack members until the scan ends, but is never split in a finished scan.</div></article><article class="finding"><header><h3 class="finding-title">Wasted space is silently low when files are unreadable</h3><span class="finding-location">FR-3, FR-7</span></header><div class="finding-note">Only the cancel case is marked partial; an unreadable twin leaves an unmarked, understated figure.</div><div class="finding-fix"><strong>Fix:</strong> Mark the figure possibly incomplete and show the unreadable count next to it.</div></article><article class="finding"><header><h3 class="finding-title">Size display is not specified enough to test</h3><span class="finding-location">FR-3, FR-1</span></header><div class="finding-note">No unit base, rounding or position; &quot;at the top&quot; appears only in UJ-1.</div><div class="finding-fix"><strong>Fix:</strong> Define the format in the Glossary and move the position into FR-3.</div></article><article class="finding"><header><h3 class="finding-title">Skip-list entry semantics are undefined</h3><span class="finding-location">FR-8, FR-9, §8</span></header><div class="finding-note">Nothing says what may be added (name or path, wildcards, empty, duplicates); case matching blocks a test.</div><div class="finding-fix"><strong>Fix:</strong> Define entries as a single folder name, reject empties and duplicates, exact matching; tests use lowercase until decided.</div></article><article class="finding"><header><h3 class="finding-title">Skip-list edge cases: files, symlinks, locked skipped folders</h3><span class="finding-location">FR-8, Glossary</span></header><div class="finding-note">A file or symlink named like a skipped folder, or a locked skipped folder, may add noise to the unreadable list.</div><div class="finding-fix"><strong>Fix:</strong> A skipped folder is never opened, so never reported unreadable; skipping applies to folders only.</div></article><article class="finding"><header><h3 class="finding-title">Scan lifecycle is undefined</h3><span class="finding-location">FR-1, FR-5, FR-9, UJ-1</span></header><div class="finding-note">Start with no folder, double start, previous results on a new scan, folder change mid-scan, skip-list edits after a scan.</div><div class="finding-fix"><strong>Fix:</strong> Add a short lifecycle rule.</div></article><article class="finding"><header><h3 class="finding-title">Empty and degenerate outcomes have no display</h3><span class="finding-location">FR-3, FR-4, FR-2</span></header><div class="finding-note">No files to check, or no groups: is it &quot;0 of 0&quot;, a message, or silence? Does the final count stay on screen?</div><div class="finding-fix"><strong>Fix:</strong> Say &quot;no duplicates found&quot; and keep the final count visible.</div></article><article class="finding"><header><h3 class="finding-title">Unreadable summary on cancel and for changing files</h3><span class="finding-location">FR-7, FR-5</span></header><div class="finding-note">Not stated whether the list appears after a cancel, how files that change mid-scan are treated, or how a tester makes a file unreadable.</div><div class="finding-fix"><strong>Fix:</strong> Show the list at scan end and after cancel; add a test setup line.</div></article><article class="finding"><header><h3 class="finding-title">&quot;Unreadable&quot; includes readable things; symlink rule is post-brief</h3><span class="finding-location">Glossary, brief vs FR-7</span></header><div class="finding-note">The symlink rule is a decision taken after the approved brief (owner-confirmed); the browser API may not expose symlinks.</div><div class="finding-fix"><strong>Fix:</strong> Mark it as a post-brief owner decision; waive the test where symlinks are not exposed.</div></article><article class="finding"><header><h3 class="finding-title">Read-only and no-network are not requirements</h3><span class="finding-location">Vision, §5, SM-1, addendum</span></header><div class="finding-note">The top-priority promise has no FR and no pass/fail check.</div><div class="finding-fix"><strong>Fix:</strong> Add an FR: the app does not modify the open folder and makes no network requests; test by comparing the folder before and after.</div></article><article class="finding"><header><h3 class="finding-title">Hard links count as wasted space</h3><span class="finding-location">Glossary, FR-3</span></header><div class="finding-note">Two names for the same data match byte for byte, but deleting one frees nothing.</div><div class="finding-fix"><strong>Fix:</strong> Note that hard links are treated as separate files and the figure may overstate.</div></article><article class="finding"><header><h3 class="finding-title">SM-1 is a one-time single-folder check; SM-C1 is not measurable</h3><span class="finding-location">§7</span></header><div class="finding-note">The test folder is never described and nothing measures a missed copy.</div><div class="finding-fix"><strong>Fix:</strong> Describe the test folder contents; reword SM-C1 as a measurable guardrail.</div></article><article class="finding"><header><h3 class="finding-title">Requirement style and numbering are uneven</h3><span class="finding-location">FR-1 to FR-9</span></header><div class="finding-note">Only FR-1, FR-4, FR-7 use EARS; &quot;can cancel&quot; is not testable as an obligation; one missing blank line before FR-7.</div><div class="finding-fix"><strong>Fix:</strong> Rewrite the other FRs in EARS wording; fix the blank line.</div></article></div></details></section>
+    <div class="mechanical"><h3>Mechanical notes</h3><ul><li>No blank line before the FR-7 heading in prd.md.</li><li>IDs are contiguous and unique (FR-1 to FR-9, UJ-1/2, SM-1, SM-C1); cross-references resolve.</li><li>&quot;interface&quot;, &quot;app&quot; and &quot;screen&quot; are used interchangeably; &quot;duplicate scan&quot; (FR-1) vs &quot;scan&quot; elsewhere.</li><li>Finding counts: the rubric summary said 3 medium and 11 low; the file lists 3 medium, 9 dimension lows, and 2 mechanical items. The adversarial lens reports 21 findings and, by design, assigns no severity.</li></ul></div>
+    <footer class="report-footer"><div class="meta"><span>Rubric: /home/tzvika/file-browser/_bmad-output/planning-artifacts/prds/prd-file-browser-2026-10-26/review-rubric.md</span><span>Generated: 2026-10-26T19:41:37+02:00</span></div></footer>
+  </div>
+</body>
+</html>
