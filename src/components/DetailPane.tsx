@@ -2,6 +2,7 @@ import type { FsNode } from '../lib/types';
 import { formatBytes, formatDate, kindFromName } from '../lib/format';
 import { useFileDetails } from '../hooks/useFileDetails';
 import { ImageDetails } from './ImageDetails';
+import { TextPreview } from './TextPreview';
 import styles from './DetailPane.module.css';
 
 interface DetailPaneProps {
@@ -34,7 +35,7 @@ export function DetailPane({ selected }: DetailPaneProps) {
     );
   }
 
-  const { metadata, isImage, previewUrl, dimensions, exif, loading, error } =
+  const { metadata, isImage, previewUrl, dimensions, exif, preview, loading, error } =
     details;
 
   return (
@@ -68,6 +69,10 @@ export function DetailPane({ selected }: DetailPaneProps) {
           exif={exif}
           name={selected.name}
         />
+      )}
+
+      {metadata && preview && (
+        <TextPreview name={selected.name} preview={preview} />
       )}
     </section>
   );

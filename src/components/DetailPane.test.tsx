@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DetailPane } from './DetailPane';
 import type { FileNode } from '../lib/types';
 
@@ -15,6 +16,55 @@ function textFileNode(): FileNode {
   } as unknown as FileSystemFileHandle;
   return { kind: 'file', name: 'note.txt', path: 'note.txt', handle };
 }
+
+function nodeOf(name: string, parts: BlobPart[], type = ''): FileNode {
+  const file = new File(parts, name, { type, lastModified: 1_700_000_000_000 });
+  const handle = { kind: 'file', name, getFile: async () => file } as unknown as FileSystemFileHandle;
+  return { kind: 'file', name, path: `dir/${name}`, handle };
+}
+
+describe('DetailPane text preview', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('shows text content', async () => {
+    render(<DetailPane selected={textFileNode()} />);
+    expect(await screen.findByText('hello world')).toBeInTheDocument();
+  });
+
+  it('shows metadata only for an empty file', async () => {
+    render(<DetailPane selected={nodeOf('e.txt', [], 'text/plain')} />);
+    expect(await screen.findByText('0 B')).toBeInTheDocument();
+    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+  });
+
+  it('renders markdown, sanitizes it, and toggles to raw', async () => {
+    const md = '# Title\n\n<script>window.x=1</script>';
+    const { container } = render(<DetailPane selected={nodeOf('r.md', [md])} />);
+    expect(await screen.findByRole('heading', { name: 'Title' })).toBeInTheDocument();
+    expect(container.querySelector('script')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Raw' }));
+    expect(screen.getByText(/# Title/)).toBeInTheDocument();
+  });
+
+  it('remembers a corrupt file and does not re-read it', async () => {
+    const node = nodeOf('bad.txt', [new Uint8Array([0xff, 0xfe])]);
+    const first = render(<DetailPane selected={node} />);
+    expect(await screen.findByText(/can’t preview/i)).toBeInTheDocument();
+    first.unmount();
+
+    const file = await node.handle.getFile();
+    const spy = vi.spyOn(file, 'slice');
+    render(<DetailPane selected={node} />);
+    expect(await screen.findByText(/can’t preview/i)).toBeInTheDocument();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('shows metadata only for .docx', async () => {
+    render(<DetailPane selected={nodeOf('a.docx', ['PK'])} />);
+    expect(await screen.findByText('2 B')).toBeInTheDocument();
+    expect(screen.queryByText('Content')).not.toBeInTheDocument();
+  });
+});
 
 describe('DetailPane', () => {
   it('shows a placeholder when nothing is selected', () => {

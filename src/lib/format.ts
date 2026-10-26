@@ -53,6 +53,23 @@ export function isImage(name: string, mime = ''): boolean {
   return isImageType(mime) || isImageName(name);
 }
 
+const TEXT_EXTENSIONS = new Set([
+  'txt', 'md', 'markdown', 'json', 'csv', 'tsv', 'xml', 'yml', 'yaml', 'toml',
+  'ini', 'log', 'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'html', 'htm', 'css',
+  'scss', 'sh', 'py', 'rb', 'go', 'rs', 'java', 'c', 'h', 'cpp', 'sql', 'env',
+]);
+
+/** True when the MIME type or extension indicates readable text (not .doc/.docx/.pdf). */
+export function isText(name: string, mime = ''): boolean {
+  if (isImage(name, mime)) return false;
+  return mime.startsWith('text/') || TEXT_EXTENSIONS.has(extname(name));
+}
+
+export function isMarkdown(name: string): boolean {
+  const ext = extname(name);
+  return ext === 'md' || ext === 'markdown';
+}
+
 const KIND_LABELS: Record<string, string> = {
   jpg: 'JPEG image',
   jpeg: 'JPEG image',

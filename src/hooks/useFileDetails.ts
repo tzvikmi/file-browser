@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { FileMetadata, FileNode, ImageDimensions } from '../lib/types';
 import { fileToMetadata } from '../lib/fileMeta';
-import { isImage } from '../lib/format';
+import { isImage, isText } from '../lib/format';
+import { readTextPreview, type TextPreviewResult } from '../lib/textPreview';
+import { corruptKey, isKnownCorrupt, markCorrupt } from '../lib/corruptCache';
 import { getExif, getImageDimensions } from '../lib/imageMeta';
 
 export interface FileDetails {
@@ -10,6 +12,7 @@ export interface FileDetails {
   previewUrl: string | null;
   dimensions: ImageDimensions | null;
   exif: Record<string, unknown> | null;
+  preview: TextPreviewResult | null;
   loading: boolean;
   error: string | null;
 }
@@ -20,6 +23,7 @@ const EMPTY: FileDetails = {
   previewUrl: null,
   dimensions: null,
   exif: null,
+  preview: null,
   loading: false,
   error: null,
 };
@@ -59,6 +63,17 @@ export function useFileDetails(node: FileNode | null): FileDetails {
           exif = await getExif(file);
         }
 
+        let preview: TextPreviewResult | null = null;
+        if (isText(file.name, file.type)) {
+          const key = corruptKey(node.path, file.size, file.lastModified);
+          if (isKnownCorrupt(key)) {
+            preview = { status: 'corrupt' };
+          } else {
+            preview = await readTextPreview(file);
+            if (preview.status === 'corrupt') markCorrupt(key);
+          }
+        }
+
         if (!active) {
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           return;
@@ -70,6 +85,7 @@ export function useFileDetails(node: FileNode | null): FileDetails {
           previewUrl,
           dimensions,
           exif,
+          preview,
           loading: false,
           error: null,
         });

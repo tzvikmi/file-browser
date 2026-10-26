@@ -3,6 +3,8 @@ import {
   extname,
   formatBytes,
   isImage,
+  isMarkdown,
+  isText,
   isImageName,
   kindFromName,
 } from './format';
@@ -68,5 +70,16 @@ describe('kindFromName', () => {
   it('falls back for unknown or missing extensions', () => {
     expect(kindFromName('a.xyz')).toBe('XYZ file');
     expect(kindFromName('Makefile')).toBe('File');
+  });
+});
+
+describe('isText / isMarkdown', () => {
+  it('detects text by extension or MIME, not docs or images', () => {
+    expect(isText('a.txt')).toBe(true);
+    expect(isText('a.bin', 'text/plain')).toBe(true);
+    expect(isText('a.docx')).toBe(false);
+    expect(isText('a.svg', 'image/svg+xml')).toBe(false);
+    expect(isMarkdown('README.MD')).toBe(true);
+    expect(isMarkdown('a.txt')).toBe(false);
   });
 });
