@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extname,
   formatBytes,
+  formatRelative,
   isImage,
   isMarkdown,
   isText,
@@ -70,6 +71,44 @@ describe('kindFromName', () => {
   it('falls back for unknown or missing extensions', () => {
     expect(kindFromName('a.xyz')).toBe('XYZ file');
     expect(kindFromName('Makefile')).toBe('File');
+  });
+});
+
+describe('formatRelative', () => {
+  const now = Date.UTC(2026, 0, 1);
+  const MIN = 60_000;
+  const HOUR = 60 * MIN;
+  const DAY = 24 * HOUR;
+
+  it('says "just now" under a minute, either direction', () => {
+    expect(formatRelative(now, now)).toBe('just now');
+    expect(formatRelative(now - 59_000, now)).toBe('just now');
+    expect(formatRelative(now + 30_000, now)).toBe('just now');
+  });
+
+  it('formats minutes, hours and days in the past', () => {
+    expect(formatRelative(now - 5 * MIN, now)).toBe('5 minutes ago');
+    expect(formatRelative(now - 3 * HOUR, now)).toBe('3 hours ago');
+    expect(formatRelative(now - 3 * DAY, now)).toBe('3 days ago');
+  });
+
+  it('formats months and years in the past', () => {
+    expect(formatRelative(now - 60 * DAY, now)).toBe('2 months ago');
+    expect(formatRelative(now - 800 * DAY, now)).toBe('2 years ago');
+  });
+
+  it('uses singular units at exactly one', () => {
+    expect(formatRelative(now - MIN, now)).toBe('1 minute ago');
+    expect(formatRelative(now - DAY, now)).toBe('1 day ago');
+  });
+
+  it('handles a future date', () => {
+    expect(formatRelative(now + 2 * DAY, now)).toBe('in 2 days');
+  });
+
+  it('returns an em dash for invalid input', () => {
+    expect(formatRelative(NaN, now)).toBe('—');
+    expect(formatRelative(now, Infinity)).toBe('—');
   });
 });
 

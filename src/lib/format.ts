@@ -28,6 +28,34 @@ export function formatDate(epochMs: number): string {
   });
 }
 
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+const MONTH = 30 * DAY;
+const YEAR = 365 * DAY;
+
+const relativeFormat = new Intl.RelativeTimeFormat('en', { numeric: 'always' });
+
+/**
+ * Relative time such as "3 days ago" or "in 2 hours". `nowMs` is a parameter
+ * so the function stays pure; under a minute either way reads "just now".
+ */
+export function formatRelative(epochMs: number, nowMs: number): string {
+  if (!Number.isFinite(epochMs) || !Number.isFinite(nowMs)) return '—';
+  const diff = epochMs - nowMs;
+  const abs = Math.abs(diff);
+  if (abs < MINUTE) return 'just now';
+
+  const sign = diff < 0 ? -1 : 1;
+  const [unit, size]: [Intl.RelativeTimeFormatUnit, number] =
+    abs < HOUR ? ['minute', MINUTE]
+    : abs < DAY ? ['hour', HOUR]
+    : abs < MONTH ? ['day', DAY]
+    : abs < YEAR ? ['month', MONTH]
+    : ['year', YEAR];
+  return relativeFormat.format(sign * Math.floor(abs / size), unit);
+}
+
 /** Lowercased extension without the dot, or "" when there is none. */
 export function extname(name: string): string {
   const dot = name.lastIndexOf('.');

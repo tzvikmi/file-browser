@@ -1,5 +1,10 @@
 import type { FsNode } from '../lib/types';
-import { formatBytes, formatDate, kindFromName } from '../lib/format';
+import {
+  formatBytes,
+  formatDate,
+  formatRelative,
+  kindFromName,
+} from '../lib/format';
 import { useFileDetails } from '../hooks/useFileDetails';
 import { ImageDetails } from './ImageDetails';
 import { TextPreview } from './TextPreview';
@@ -57,7 +62,10 @@ export function DetailPane({ selected }: DetailPaneProps) {
             <dt className={styles.key}>Type</dt>
             <dd className={styles.value}>{metadata.type || '—'}</dd>
             <dt className={styles.key}>Modified</dt>
-            <dd className={styles.value}>{formatDate(metadata.lastModified)}</dd>
+            <dd className={styles.value}>
+              {formatDate(metadata.lastModified)} (
+              {formatRelative(metadata.lastModified, Date.now())})
+            </dd>
           </dl>
         </div>
       )}

@@ -66,6 +66,29 @@ describe('DetailPane text preview', () => {
   });
 });
 
+describe('DetailPane modified time', () => {
+  it('shows the relative time next to the modified date', async () => {
+    const threeDaysAgo = Date.now() - 3 * 86_400_000 - 60_000;
+    const file = new File(['x'], 'recent.txt', {
+      type: 'text/plain',
+      lastModified: threeDaysAgo,
+    });
+    const handle = {
+      kind: 'file',
+      name: 'recent.txt',
+      getFile: async () => file,
+    } as unknown as FileSystemFileHandle;
+    const node: FileNode = {
+      kind: 'file',
+      name: 'recent.txt',
+      path: 'recent.txt',
+      handle,
+    };
+    render(<DetailPane selected={node} />);
+    expect(await screen.findByText(/3 days ago/)).toBeInTheDocument();
+  });
+});
+
 describe('DetailPane', () => {
   it('shows a placeholder when nothing is selected', () => {
     render(<DetailPane selected={null} />);
